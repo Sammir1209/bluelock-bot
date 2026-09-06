@@ -135,6 +135,10 @@ export function registerPanelCommands(bot: Telegraf<CustomContext>) {
       ).catch(() => {});
     }
 
+    const cancelKeyboard = Markup.inlineKeyboard([
+      [Markup.button.callback('❌ Cancelar Vinculación', `panel_cancel_login_${newAcc.id}`)]
+    ]);
+
     if (result.qrImagePath && fs.existsSync(result.qrImagePath)) {
       try {
         await ctx.telegram.sendPhoto(
@@ -153,16 +157,39 @@ export function registerPanelCommands(bot: Telegraf<CustomContext>) {
               '',
               '⏳ *Esperando que confirmes en la app... Te avisaré apenas se conecte.*'
             ].join('\n'),
-            parse_mode: 'Markdown'
+            parse_mode: 'Markdown',
+            ...cancelKeyboard
           }
         );
       } catch (err) {
         await ctx.reply(
           `📲 *Código de vinculación para Cuenta #${newAcc.id}:* \`${result.code}\`\n\nIntrodúcelo en la app de Surfshark.`,
-          { parse_mode: 'Markdown' }
+          { parse_mode: 'Markdown', ...cancelKeyboard }
         ).catch(() => {});
       }
     }
+  });
+
+  // Callback para cancelar vinculación en curso
+  bot.action(/panel_cancel_login_(\d+)/, async (ctx) => {
+    if (!ctx.state.isOwner) return;
+    const accountId = parseInt(ctx.match[1], 10);
+    await ctx.answerCbQuery('Cancelando proceso de vinculación...');
+
+    await surfsharkBrowser.cancelAppLogin(accountId);
+
+    try {
+      if (ctx.callbackQuery.message) {
+        await ctx.deleteMessage().catch(() => {});
+      }
+    } catch (e) {}
+
+    await ctx.reply(`❌ *Vinculación de Cuenta #${accountId} cancelada.* Registro descartado.`, {
+      parse_mode: 'Markdown'
+    });
+
+    const { text, keyboard } = await renderPanel();
+    await ctx.replyWithMarkdown(text, keyboard).catch(() => {});
   });
 
   // Callback para pausar / activar cuenta

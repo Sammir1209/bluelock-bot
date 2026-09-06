@@ -243,6 +243,36 @@ export class SurfsharkBrowser {
   }
 
   /**
+   * Cancela la vinculación en curso si existe
+   */
+  async cancelAppLogin(accountId?: number) {
+    try {
+      if (this.appLoginPage) {
+        await this.appLoginPage.close().catch(() => {});
+        this.appLoginPage = null;
+      }
+
+      const targetId = accountId || this.pendingLoginAccountId;
+      if (targetId) {
+        if (this.contexts.has(targetId)) {
+          await this.contexts.get(targetId)?.close().catch(() => {});
+          this.contexts.delete(targetId);
+        }
+        // Si no completó login, eliminar registro incompleto
+        const acc = await ConfigRepository.getAccountById(targetId);
+        if (acc && !acc.isLoggedIn) {
+          await ConfigRepository.deleteAccount(targetId).catch(() => {});
+        }
+      }
+      this.pendingLoginAccountId = null;
+      return true;
+    } catch (e) {
+      console.error('[SurfsharkBrowser] Error al cancelar vinculación:', e);
+      return false;
+    }
+  }
+
+  /**
    * Sincroniza la lista y cantidad de dispositivos vinculados para una cuenta
    */
   async syncAccountDevices(accountId: number, sessionFile: string): Promise<number> {
