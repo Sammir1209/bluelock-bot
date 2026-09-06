@@ -17,6 +17,17 @@ async function main() {
 
   const bot = createBot();
 
+  // Mini servidor HTTP para satisfacer el requerimiento de puerto de Render Web Service
+  const port = process.env.PORT || 3000;
+  const http = await import('http');
+  const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', service: 'Surfshark Bot Running' }));
+  });
+  server.listen(port, () => {
+    console.log(`🌐 Servidor HTTP de salud escuchando en puerto ${port} (Render Web Service).`);
+  });
+
   // Iniciar Telegraf en modo polling
   await bot.launch();
   console.log('🤖 Bot de Telegram en línea y escuchando eventos.');
