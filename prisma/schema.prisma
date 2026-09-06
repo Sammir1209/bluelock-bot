@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model VpnChatConfig {
+  id          Int      @id @default(autoincrement())
+  chatId      String   @unique @map("chat_id")
+  topicId     String?  @map("topic_id")
+  isActive    Boolean  @default(true) @map("is_active")
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("vpn_chat_config")
+}
+
+model SurfsharkAccount {
+  id           Int       @id @default(autoincrement())
+  alias        String    @default("Cuenta Principal")
+  sessionFile  String    @default("storageState.json") @map("session_file")
+  email        String?
+  isActive     Boolean   @default(true) @map("is_active")
+  isLoggedIn   Boolean   @default(false) @map("is_logged_in")
+  devicesCount Int       @default(0) @map("devices_count")
+  totalActives Int       @default(0) @map("total_actives")
+  lastUsed     DateTime? @map("last_used")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("surfshark_account")
+}
